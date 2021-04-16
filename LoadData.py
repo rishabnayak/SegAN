@@ -38,8 +38,10 @@ class Dataset(torch.utils.data.Dataset):
             ReLabel(255, 1),
         ])
         #sort file names
-        self.input_paths = sorted(glob(os.path.join(self.root, '{}/*.jpg'.format("ISIC-2017_Training_Data"))))
-        self.label_paths = sorted(glob(os.path.join(self.root, '{}/*.png'.format("ISIC-2017_Training_Part1_GroundTruth"))))
+        self.input_paths = sorted(
+            glob(os.path.join(self.root, '{}/*.png'.format("data/train/images"))))
+        self.label_paths = sorted(
+            glob(os.path.join(self.root, '{}/*.png'.format("data/train/masks"))))
         self.name = os.path.basename(root)
         if len(self.input_paths) == 0 or len(self.label_paths) == 0:
             raise Exception("No images/labels are found in {}".format(self.root))
@@ -125,8 +127,10 @@ class Dataset_val(torch.utils.data.Dataset):
             ReLabel(255, 1),
         ])
         #sort file names
-        self.input_paths = sorted(glob(os.path.join(self.root, '{}/*.jpg'.format("ISIC-2017_Test_v2_Data"))))
-        self.label_paths = sorted(glob(os.path.join(self.root, '{}/*.png'.format("ISIC-2017_Test_v2_Part1_GroundTruth"))))
+        self.input_paths = sorted(
+            glob(os.path.join(self.root, '{}/*.png'.format("data/val/images"))))
+        self.label_paths = sorted(
+            glob(os.path.join(self.root, '{}/*.png'.format("data/val/masks"))))
         self.name = os.path.basename(root)
         if len(self.input_paths) == 0 or len(self.label_paths) == 0:
             raise Exception("No images/labels are found in {}".format(self.root))
