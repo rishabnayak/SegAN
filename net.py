@@ -8,6 +8,7 @@ import argparse
 channel_dim = 3
 ndf = 64
 
+
 class GlobalConvBlock(nn.Module):
     def __init__(self, in_dim, out_dim, kernel_size):
         super(GlobalConvBlock, self).__init__()
@@ -37,9 +38,10 @@ class GlobalConvBlock(nn.Module):
         x_l = self.conv_l2(x_l)
         x_r = self.conv_r1(x)
         x_r = self.conv_r2(x_r)
-        #combine two paths
+        # combine two paths
         x = x_l + x_r
         return x
+
 
 class ResidualBlock(nn.Module):
     def __init__(self, indim):
@@ -47,13 +49,14 @@ class ResidualBlock(nn.Module):
         self.conv1 = nn.Conv2d(indim, indim*2, kernel_size=1, bias=False)
         self.norm1 = nn.BatchNorm2d(indim*2)
         self.relu1 = nn.LeakyReLU(0.2, inplace=True)
-        self.conv2 = nn.Conv2d(indim*2, indim*2, kernel_size=3, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(
+            indim*2, indim*2, kernel_size=3, padding=1, bias=False)
         self.norm2 = nn.BatchNorm2d(indim*2)
         self.relu2 = nn.LeakyReLU(0.2, inplace=True)
         self.conv3 = nn.Conv2d(indim*2, indim, kernel_size=1, bias=False)
         self.norm3 = nn.BatchNorm2d(indim)
         self.relu3 = nn.LeakyReLU(0.2, inplace=True)
-        #parameter initialization
+        # parameter initialization
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
@@ -74,19 +77,21 @@ class ResidualBlock(nn.Module):
         out = x + residual
         return out
 
+
 class ResidualBlock_D(nn.Module):
     def __init__(self, indim):
         super(ResidualBlock_D, self).__init__()
         self.conv1 = nn.Conv2d(indim, indim*2, kernel_size=1, bias=False)
         self.norm1 = nn.BatchNorm2d(indim*2)
         self.relu1 = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(indim*2, indim*2, kernel_size=3, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(
+            indim*2, indim*2, kernel_size=3, padding=1, bias=False)
         self.norm2 = nn.BatchNorm2d(indim*2)
         self.relu2 = nn.ReLU(inplace=True)
         self.conv3 = nn.Conv2d(indim*2, indim, kernel_size=1, bias=False)
         self.norm3 = nn.BatchNorm2d(indim)
         self.relu3 = nn.ReLU(inplace=True)
-        #parameter initialization
+        # parameter initialization
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
@@ -181,7 +186,6 @@ class NetS(nn.Module):
             # state size. (ndf*8) x 1 x 1
         )
 
-
         self.deconvblock1 = nn.Sequential(
             # state size. (ngf*8) x 1 x 1
             nn.ConvTranspose2d(ndf * 8, ndf * 32, kernel_size=1, bias=False),
@@ -191,7 +195,7 @@ class NetS(nn.Module):
         )
         self.deconvblock2 = nn.Sequential(
             # state size. (cat: ngf*32) x 1 x 1
-            nn.Conv2d(ndf * 64 , ndf * 16, 3, 1, 1, bias=False),
+            nn.Conv2d(ndf * 64, ndf * 16, 3, 1, 1, bias=False),
             nn.BatchNorm2d(ndf * 16),
             nn.ReLU(True),
             # state size. (ngf*16) x 2 x 2
@@ -258,7 +262,7 @@ class NetS(nn.Module):
         self.deconvblock8_1 = ResidualBlock_D(ndf)
         self.deconvblock9 = nn.Sequential(
             # state size. (ngf) x 128 x 128
-            nn.Conv2d( ndf, 1, 5, 1, 2, bias=False),
+            nn.Conv2d(ndf, 1, 5, 1, 2, bias=False),
             # state size. (channel_dim) x 128 x 128
             # nn.Sigmoid()
         )
@@ -277,7 +281,6 @@ class NetS(nn.Module):
                 m.weight.data.normal_(0, sqrt(2. / n))
                 if m.bias is not None:
                     m.bias.data.zero_()
-
 
     def forward(self, input):
         # for now it only supports one GPU
@@ -298,41 +301,47 @@ class NetS(nn.Module):
             encoder8 = self.convblock8(encoder7)
 
             decoder1 = self.deconvblock1(encoder8)
-            decoder1 = torch.cat([encoder7,decoder1],1)
-            decoder1 = F.upsample(decoder1, size = encoder6.size()[2:], mode='bilinear')
+            decoder1 = torch.cat([encoder7, decoder1], 1)
+            decoder1 = F.upsample(decoder1, size=encoder6.size()[
+                                  2:], mode='bilinear')
             decoder2 = self.deconvblock2(decoder1)
             decoder2 = self.deconvblock2_1(decoder2) + decoder2
             # concatenate along depth dimension
-            decoder2 = torch.cat([encoder6,decoder2],1)
-            decoder2 = F.upsample(decoder2, size = encoder5.size()[2:], mode='bilinear')
+            decoder2 = torch.cat([encoder6, decoder2], 1)
+            decoder2 = F.upsample(decoder2, size=encoder5.size()[
+                                  2:], mode='bilinear')
             decoder3 = self.deconvblock3(decoder2)
             decoder3 = self.deconvblock3_1(decoder3)
-            decoder3 = torch.cat([encoder5,decoder3],1)
-            decoder3 = F.upsample(decoder3, size = encoder4.size()[2:], mode='bilinear')
+            decoder3 = torch.cat([encoder5, decoder3], 1)
+            decoder3 = F.upsample(decoder3, size=encoder4.size()[
+                                  2:], mode='bilinear')
             decoder4 = self.deconvblock4(decoder3)
             decoder4 = self.deconvblock4_1(decoder4)
-            decoder4 = torch.cat([encoder4,decoder4],1)
-            decoder4 = F.upsample(decoder4, size = encoder3.size()[2:], mode='bilinear')
+            decoder4 = torch.cat([encoder4, decoder4], 1)
+            decoder4 = F.upsample(decoder4, size=encoder3.size()[
+                                  2:], mode='bilinear')
             decoder5 = self.deconvblock5(decoder4)
             decoder5 = self.deconvblock5_1(decoder5)
-            decoder5 = torch.cat([encoder3,decoder5],1)
-            decoder5 = F.upsample(decoder5, size = encoder2.size()[2:], mode='bilinear')
+            decoder5 = torch.cat([encoder3, decoder5], 1)
+            decoder5 = F.upsample(decoder5, size=encoder2.size()[
+                                  2:], mode='bilinear')
             decoder6 = self.deconvblock6(decoder5)
             decoder6 = self.deconvblock6_1(decoder6)
-            decoder6 = torch.cat([encoder2,decoder6],1)
-            decoder6 = F.upsample(decoder6, size = encoder1.size()[2:], mode='bilinear')
+            decoder6 = torch.cat([encoder2, decoder6], 1)
+            decoder6 = F.upsample(decoder6, size=encoder1.size()[
+                                  2:], mode='bilinear')
             decoder7 = self.deconvblock7(decoder6)
             decoder7 = self.deconvblock7_1(decoder7)
-            decoder7 = torch.cat([encoder1,decoder7],1)
-            decoder7 = F.upsample(decoder7, size = input.size()[2:], mode='bilinear')
+            decoder7 = torch.cat([encoder1, decoder7], 1)
+            decoder7 = F.upsample(decoder7, size=input.size()[
+                                  2:], mode='bilinear')
             decoder8 = self.deconvblock8(decoder7)
             decoder8 = self.deconvblock8_1(decoder8)
             decoder9 = self.deconvblock9(decoder8)
         else:
             print('For now we only support one GPU')
-        
-        return decoder9
 
+        return decoder9
 
 
 class NetC(nn.Module):
@@ -453,12 +462,13 @@ class NetC(nn.Module):
             # out5 = self.convblock5_1(out5)
             out6 = self.convblock6(out5)
             # out6 = self.convblock6_1(out6) + out6
-            output = torch.cat((input.view(batchsize,-1),1*out1.view(batchsize,-1),
-                                2*out2.view(batchsize,-1),2*out3.view(batchsize,-1),
-                                2*out4.view(batchsize,-1),2*out5.view(batchsize,-1),
-                                4*out6.view(batchsize,-1)),1)
+            output = torch.cat((input.view(batchsize, -1), 1*out1.view(batchsize, -1),
+                                2*out2.view(batchsize, -1), 2 *
+                                out3.view(batchsize, -1),
+                                2*out4.view(batchsize, -1), 2 *
+                                out5.view(batchsize, -1),
+                                4*out6.view(batchsize, -1)), 1)
         else:
             print('For now we only support one GPU')
 
         return output
-

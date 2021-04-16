@@ -11,12 +11,14 @@ except ImportError:
     accimage = None
 import types
 
+
 def _is_pil_image(img):
     if accimage is not None:
         return isinstance(img, (Image.Image, accimage.Image))
     else:
         return isinstance(img, Image.Image)
-        
+
+
 def adjust_brightness(img, brightness_factor):
     """Adjust brightness of an Image.
     Args:
@@ -90,7 +92,8 @@ def adjust_hue(img, hue_factor):
         PIL.Image: Hue adjusted image.
     """
     if not(-0.5 <= hue_factor <= 0.5):
-        raise ValueError('hue_factor is not in [-0.5, 0.5].'.format(hue_factor))
+        raise ValueError(
+            'hue_factor is not in [-0.5, 0.5].'.format(hue_factor))
 
     if not _is_pil_image(img):
         raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
@@ -110,6 +113,7 @@ def adjust_hue(img, hue_factor):
     img = Image.merge('HSV', (h, s, v)).convert(input_mode)
     return img
 
+
 class Lambda(object):
     """Apply a user-defined lambda as a transform.
     Args:
@@ -122,6 +126,8 @@ class Lambda(object):
 
     def __call__(self, img):
         return self.lambd(img)
+
+
 class Compose(object):
     """Composes several transforms together.
     Args:
@@ -141,6 +147,7 @@ class Compose(object):
             img = t(img)
         return img
 
+
 class ColorJitter(object):
     """Randomly change the brightness, contrast and saturation of an image.
     Args:
@@ -153,6 +160,7 @@ class ColorJitter(object):
         hue(float): How much to jitter hue. hue_factor is chosen uniformly from
             [-hue, hue]. Should be >=0 and <= 0.5.
     """
+
     def __init__(self, brightness=0, contrast=0, saturation=0, hue=0):
         self.brightness = brightness
         self.contrast = contrast
@@ -169,16 +177,22 @@ class ColorJitter(object):
         """
         transforms = []
         if brightness > 0:
-            brightness_factor = np.random.uniform(max(0, 1 - brightness), 1 + brightness)
-            transforms.append(Lambda(lambda img: adjust_brightness(img, brightness_factor)))
+            brightness_factor = np.random.uniform(
+                max(0, 1 - brightness), 1 + brightness)
+            transforms.append(
+                Lambda(lambda img: adjust_brightness(img, brightness_factor)))
 
         if contrast > 0:
-            contrast_factor = np.random.uniform(max(0, 1 - contrast), 1 + contrast)
-            transforms.append(Lambda(lambda img: adjust_contrast(img, contrast_factor)))
+            contrast_factor = np.random.uniform(
+                max(0, 1 - contrast), 1 + contrast)
+            transforms.append(
+                Lambda(lambda img: adjust_contrast(img, contrast_factor)))
 
         if saturation > 0:
-            saturation_factor = np.random.uniform(max(0, 1 - saturation), 1 + saturation)
-            transforms.append(Lambda(lambda img: adjust_saturation(img, saturation_factor)))
+            saturation_factor = np.random.uniform(
+                max(0, 1 - saturation), 1 + saturation)
+            transforms.append(
+                Lambda(lambda img: adjust_saturation(img, saturation_factor)))
 
         if hue > 0:
             hue_factor = np.random.uniform(-hue, hue)
@@ -200,9 +214,11 @@ class ColorJitter(object):
                                     self.saturation, self.hue)
         return transform(img)
 
+
 class Scale(object):
     def __init__(self, size, interpolation=Image.BILINEAR):
-        assert isinstance(size, int) or (isinstance(size, collections.Iterable) and len(size) == 2)
+        assert isinstance(size, int) or (isinstance(
+            size, collections.Iterable) and len(size) == 2)
         self.size = size
         self.interpolation = interpolation
 
@@ -223,7 +239,6 @@ class Scale(object):
             return img.resize(self.size, self.interpolation)
 
 
-
 class ToLabel(object):
 
     def __call__(self, image):
@@ -237,10 +252,10 @@ class ReLabel(object):
         self.nlabel = nlabel
 
     def __call__(self, tensor):
-        assert isinstance(tensor, torch.LongTensor), 'tensor needs to be LongTensor'
+        assert isinstance(
+            tensor, torch.LongTensor), 'tensor needs to be LongTensor'
         tensor[tensor == self.olabel] = self.nlabel
         return tensor
-
 
 
 class HorizontalFlip(object):

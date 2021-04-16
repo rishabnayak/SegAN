@@ -7,14 +7,16 @@ from torchvision.transforms import Compose, CenterCrop, Normalize, ToTensor
 from transform import ReLabel, ToLabel, Scale, HorizontalFlip, VerticalFlip, ColorJitter
 import random
 
+
 def makedirs(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
+
 class Dataset(torch.utils.data.Dataset):
 
     def __init__(self, root):
-        self.size = (180,135)
+        self.size = (180, 135)
         self.root = root
         if not os.path.exists(self.root):
             raise Exception("[!] {} not exists.".format(root))
@@ -28,7 +30,7 @@ class Dataset(torch.utils.data.Dataset):
         ])
         self.img_transform = Compose([
             ToTensor(),
-            Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225]),
+            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
         self.hsv_transform = Compose([
             ToTensor(),
@@ -37,14 +39,15 @@ class Dataset(torch.utils.data.Dataset):
             ToLabel(),
             ReLabel(255, 1),
         ])
-        #sort file names
+        # sort file names
         self.input_paths = sorted(
             glob(os.path.join(self.root, '{}/*.png'.format("data/train/images"))))
         self.label_paths = sorted(
             glob(os.path.join(self.root, '{}/*.png'.format("data/train/masks"))))
         self.name = os.path.basename(root)
         if len(self.input_paths) == 0 or len(self.label_paths) == 0:
-            raise Exception("No images/labels are found in {}".format(self.root))
+            raise Exception(
+                "No images/labels are found in {}".format(self.root))
 
     def __getitem__(self, index):
         image = Image.open(self.input_paths[index]).convert('RGB')
@@ -60,7 +63,7 @@ class Dataset(torch.utils.data.Dataset):
         # hue_factor = random.uniform(-0.1,0.1)
         # gamma = 1 + random.uniform(-0.1,0.1)
 
-        #randomly flip images
+        # randomly flip images
         if random.random() > 0.5:
             image = HorizontalFlip()(image)
             # image_hsv = HorizontalFlip()(image_hsv)
@@ -70,9 +73,9 @@ class Dataset(torch.utils.data.Dataset):
             # image_hsv = VerticalFlip()(image_hsv)
             label = VerticalFlip()(label)
 
-        #randomly crop image to size 128*128
+        # randomly crop image to size 128*128
         w, h = image.size
-        th, tw = (128,128)
+        th, tw = (128, 128)
         x1 = random.randint(0, w - tw)
         y1 = random.randint(0, h - th)
         if w == tw and h == th:
@@ -81,9 +84,9 @@ class Dataset(torch.utils.data.Dataset):
             label = label
         else:
             if random.random() > 0.5:
-                image = image.resize((128,128),Image.BILINEAR)
+                image = image.resize((128, 128), Image.BILINEAR)
                 # image_hsv = image_hsv.resize((128,128),Image.BILINEAR)
-                label = label.resize((128,128),Image.NEAREST)
+                label = label.resize((128, 128), Image.NEAREST)
             else:
                 image = image.crop((x1, y1, x1 + tw, y1 + th))
                 # image_hsv = image_hsv.crop((x1, y1, x1 + tw, y1 + th))
@@ -96,7 +99,6 @@ class Dataset(torch.utils.data.Dataset):
         # image_hsv = self.hsv_transform(image_hsv)
         # image = torch.cat([image,image_hsv],0)
 
-
         label = self.label_transform(label)
 
         return image, label
@@ -107,14 +109,14 @@ class Dataset(torch.utils.data.Dataset):
 
 class Dataset_val(torch.utils.data.Dataset):
     def __init__(self, root):
-        size = (128,128)
+        size = (128, 128)
         self.root = root
         if not os.path.exists(self.root):
             raise Exception("[!] {} not exists.".format(root))
         self.img_transform = Compose([
             Scale(size, Image.BILINEAR),
             ToTensor(),
-            Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225]),
+            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 
         ])
         self.hsv_transform = Compose([
@@ -126,14 +128,15 @@ class Dataset_val(torch.utils.data.Dataset):
             ToLabel(),
             ReLabel(255, 1),
         ])
-        #sort file names
+        # sort file names
         self.input_paths = sorted(
             glob(os.path.join(self.root, '{}/*.png'.format("data/val/images"))))
         self.label_paths = sorted(
             glob(os.path.join(self.root, '{}/*.png'.format("data/val/masks"))))
         self.name = os.path.basename(root)
         if len(self.input_paths) == 0 or len(self.label_paths) == 0:
-            raise Exception("No images/labels are found in {}".format(self.root))
+            raise Exception(
+                "No images/labels are found in {}".format(self.root))
 
     def __getitem__(self, index):
         image = Image.open(self.input_paths[index]).convert('RGB')
@@ -159,14 +162,13 @@ class Dataset_val(torch.utils.data.Dataset):
         return len(self.input_paths)
 
 
-
 def loader(dataset, batch_size, num_workers=8, shuffle=True):
 
     input_images = dataset
 
     input_loader = torch.utils.data.DataLoader(dataset=input_images,
-                                                batch_size=batch_size,
-                                                shuffle=shuffle,
-                                                num_workers=num_workers)
+                                               batch_size=batch_size,
+                                               shuffle=shuffle,
+                                               num_workers=num_workers)
 
     return input_loader
